@@ -28,9 +28,23 @@ func runCommand() {
     cmd.Stdout = os.Stdout
     cmd.Stderr = os.Stderr
 
-	// Create a new UTS namespace
+	// Create a new UTS & PID namespace
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Cloneflags: syscall.CLONE_NEWUTS,
+		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID  | syscall.CLONE_NEWUSER,
+		UidMappings: []syscall.SysProcIDMap{
+            {
+                ContainerID: 0,
+                HostID:      os.Getuid(),
+                Size:        1,
+            },
+        },
+		GidMappings: []syscall.SysProcIDMap{
+            {
+                ContainerID: 0,
+                HostID:      os.Getgid(),
+                Size:        1,
+            },
+        },
 	}
 
 	// Start the new process with a seperate uts namespace
