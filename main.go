@@ -21,7 +21,7 @@ func runCommand() {
 
 	// Create a new UTS & PID namespace and map the permission to the container
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID  | syscall.CLONE_NEWUSER,
+		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID  | syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS,
 		UidMappings: []syscall.SysProcIDMap{
             {
                 ContainerID: 0,
@@ -39,14 +39,8 @@ func runCommand() {
 	}
 
 	// Start the new process with a seperate uts namespace
-	if err := cmd.Start(); err != nil {
+	if err := cmd.Run(); err != nil {
 		fmt.Println("Error starting container:", err)
-		os.Exit(1)
-	}
-
-	// Wait for the process to finish
-	if err := cmd.Wait(); err != nil {
-		fmt.Println("Error waiting for container execution:", err)
 		os.Exit(1)
 	}
 }
@@ -71,6 +65,18 @@ func child() {
 		os.Exit(1)
 	}
 
+	//mount /proc
+	if err := syscall.Mount("proc", "/proc", "proc", 0, ""); err != nil {
+		fmt.Println("failed to mount /proc: ", err)
+		os.Exit(1)
+	}
+
+	//unshare the mount namespace
+	if err := syscall.Unshare(syscall.CLONE_NEWNS); err != nil {
+		fmt.Println("Failed to unshare mount namespace! ", err)
+		os.Exit(1)
+	}
+
 	if len(os.Args) > 2 {
 		cmd := exec.Command(os.Args[2],os.Args[3:]...)
 		cmd.Stdin = os.Stdin
@@ -83,7 +89,14 @@ func child() {
 			os.Exit(1)
 		}
 	}
+	//unmount proc after running
+	if err := syscall.Unmount("proc", 0); err != nil {
+		fmt.Println("Failed to unmount /proc", err)
+		os.Exit(1)
+	}
 }
+
+
 
 func main() {
 	if len(os.Args) < 3 {
