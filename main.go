@@ -40,23 +40,34 @@ func runCommand() {
 
 	// Start the new process with a seperate uts namespace
 	if err := cmd.Start(); err != nil {
-		fmt.Println("Error starting command:", err)
+		fmt.Println("Error starting container:", err)
 		os.Exit(1)
 	}
 
 	// Wait for the process to finish
 	if err := cmd.Wait(); err != nil {
-		fmt.Println("Error waiting for command:", err)
+		fmt.Println("Error waiting for container execution:", err)
 		os.Exit(1)
 	}
 }
 
-func child() {
+func child() { 
 	// Set the hostname within the new namespace
 	hostname := fmt.Sprintf("container-%s", time.Now().Format("20060102-150405"))
 
 	if err := syscall.Sethostname([]byte(hostname)); err != nil {
 		fmt.Println("Error setting hostname:", err)
+		os.Exit(1)
+	}
+
+	// change root directory
+	if err := syscall.Chroot("./root_alpine") ; err != nil {
+		fmt.Println("Error changing the root directory", err) 
+		os.Exit(1)
+	}
+	//move to root directory
+	if err := syscall.Chdir("/") ; err != nil {
+		fmt.Println("Error changing pwd to roo '/' ")
 		os.Exit(1)
 	}
 
@@ -68,7 +79,7 @@ func child() {
 
 		// Execute the command
 		if err := cmd.Run(); err != nil {
-			fmt.Println("Error running command:", err)
+			fmt.Println("Error running container:", err)
 			os.Exit(1)
 		}
 	}
