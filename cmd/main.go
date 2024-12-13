@@ -22,7 +22,9 @@ func main() {
 		}
 		container.ContainerInit()
 	case "pull":
-		image.InitPull(os.Args[2], "latest")		
+		image.InitPull(os.Args[2], "latest")	
+	case "images":
+		image.ListImages()		
 	default:
 		log.Fatalf("%s : command not supported.", os.Args[1])
 	}

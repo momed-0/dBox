@@ -66,6 +66,8 @@ sudo ./dBox run ubuntu /bin/bash
 ```
 Inside the isolated shell, you can run commands like ps, ls, or any other installed commands.
 
+### Pulling an Image
+
 To pull an image that is available in the official docker library. ( https://hub.docker.com/search?badges=official ) use the following command:
 
 sudo ./dBox pull [image_name] 
@@ -73,6 +75,11 @@ For example, to pull the Arch Linux image:
 
 ```bash
 sudo ./dBox pull archlinux
+```
+### List all the local images
+
+```bash
+sudo ./dBox images
 ```
 
 ## License
