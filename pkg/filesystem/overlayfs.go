@@ -7,10 +7,12 @@ import (
 	"syscall"
 )
 
-const image = "./images/root_bundle"
 
-func SetupOverlayFS(containerName string) error {
-	lowerDir := image
+
+
+func SetupOverlayFS(containerName string,imageName string) error {
+
+	lowerDir := fmt.Sprintf("./images/%s",imageName)
 	upperDir := fmt.Sprintf("/tmp/%s/upper", containerName) 
 	workDir := fmt.Sprintf("/tmp/%s/work", containerName)   
 	rootDir := fmt.Sprintf("/tmp/%s/root", containerName)   

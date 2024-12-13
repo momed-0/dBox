@@ -2,18 +2,22 @@ package main
 
 import (
 	"dBox/pkg/container"
+	"dBox/pkg/image"
 	"log"
 	"os"
+
 )
 
 func main() {
-	if len(os.Args) < 3 {
-		log.Fatalf("Error! Usage ./main run [command] [options]")
-	}
 
 	switch os.Args[1] {
 	case "run":
+		if len(os.Args) < 4  {
+			log.Fatalf("Error! Usage ./main run [image name] [command] [options]")
+		}
 		container.ContainerInit()
+	case "pull":
+		image.InitPull(os.Args[2], "latest")	
 	case "child":
 		container.Child()
 	default:

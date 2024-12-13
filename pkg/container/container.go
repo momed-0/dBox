@@ -12,7 +12,7 @@ import (
 
 
 func ContainerInit() {
-	cmd := exec.Command("/proc/self/exe", append([]string{"child"}, os.Args[2:]...)...)
+	cmd := exec.Command("/proc/self/exe", append([]string{"child",os.Args[2]}, os.Args[3:]...)...)
 	cGroupInit()
 
 	cmd.Stdin = os.Stdin
@@ -54,7 +54,7 @@ func Child() {
 		log.Fatalf("Error setting hostname: %v", err)
 	}
 
-	if err := filesystem.SetupOverlayFS(hostname); err != nil {
+	if err := filesystem.SetupOverlayFS(hostname,os.Args[2]); err != nil {
 		log.Fatalf("Error setting up overlayfs: %v", err)
 	}
 	defer filesystem.TeardownOverlayFS(hostname)
@@ -71,12 +71,13 @@ func Child() {
 
 	log.Printf("Mounting /proc file system..")
 	if err := syscall.Mount("proc", "/proc", "proc", 0, ""); err != nil {
-		log.Fatalf("failed to mount /proc: %v", err)
+		log.Print("failed to mount /proc: %v", err)
 	}
 
 	if len(os.Args) > 2 {
-		log.Printf("Executing the command: %s", os.Args[2])
-		cmd := exec.Command(os.Args[2], os.Args[3:]...)
+		log.Printf("Executing the command: %s", os.Args[3])
+		cmd := exec.Command(os.Args[3], os.Args[4:]...) // os.Args[3] is the command, os.Args[4:] are its arguments
+		fmt.Println(cmd)
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -92,6 +93,6 @@ func Child() {
 
 	log.Printf("Unmounting /proc file system..")
 	if err := syscall.Unmount("proc", 0); err != nil {
-		log.Fatalf("Failed to unmount /proc: %v", err)
+		log.Printf("Failed to unmount /proc: %v", err)
 	}
 }
