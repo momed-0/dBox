@@ -8,7 +8,7 @@ import (
 
 const IMAGE_DIR = "./images/"
 
-func FindImagesSaved(imageName string,tag string) bool {
+func SearchImagesSaved(imageName string,tag string) bool {
 	entries, err := os.ReadDir(IMAGE_DIR)
 	if err != nil {
         log.Fatalf("Failed to read saved files in %s , error : %v",IMAGE_DIR,err)

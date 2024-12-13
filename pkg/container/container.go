@@ -12,13 +12,13 @@ import (
 
 
 func ContainerInit() {
-	cmd := exec.Command("/proc/self/exe", append([]string{"child",os.Args[2]}, os.Args[3:]...)...)
+	cmd := exec.Command(os.Args[0], os.Args[1:]...)
 	cGroupInit()
-
+	
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
+	cmd.Env = append(os.Environ(), "PROCESS=CHILD")
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID | syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS,
 		Credential: &syscall.Credential{Uid: 0, Gid: 0},

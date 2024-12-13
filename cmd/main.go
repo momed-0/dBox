@@ -10,6 +10,11 @@ import (
 
 func main() {
 
+	if os.Getenv("PROCESS") == "CHILD" {
+		container.Child()
+		return
+	}
+
 	switch os.Args[1] {
 	case "run":
 		if len(os.Args) < 4  {
@@ -17,9 +22,7 @@ func main() {
 		}
 		container.ContainerInit()
 	case "pull":
-		image.InitPull(os.Args[2], "latest")	
-	case "child":
-		container.Child()
+		image.InitPull(os.Args[2], "latest")		
 	default:
 		log.Fatalf("%s : command not supported.", os.Args[1])
 	}
