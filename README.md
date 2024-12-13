@@ -82,6 +82,17 @@ sudo ./dBox pull archlinux
 sudo ./dBox images
 ```
 
+
+##TODO
+
+- tmp files is not automatically cleaned up.Although it will reset on every reboot
+- Add the ability to pull and then run an image in one go.
+- Add support for tags to determine which version of an image to pull and run.
+- Add networking support via the network namespace.
+- Add option to remove the images locally stored
+
+
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0. See the LICENSE file for more details.
