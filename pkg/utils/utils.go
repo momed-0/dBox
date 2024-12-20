@@ -68,7 +68,7 @@ func ExtractTarFile(target string, header *tar.Header, tarReader *tar.Reader) er
 		// Check if the target already exists
 		if _, err := os.Lstat(target); err == nil {
 			// Target exists, skip creating symlink or handle conflict
-			fmt.Println("Symlink already exists, skipping:", target)
+			log.Println("Symlink already exists, skipping:", target)
 			return nil // Skip this case, or handle it in another way
 		}
 		if err := os.Symlink(header.Linkname, target); err != nil {
@@ -99,7 +99,7 @@ func ExtractLayer(destDir string, layerData io.Reader) error {
 			return fmt.Errorf("failed to create directory:%q : %v",destDir, err)
 		}
 		target := filepath.Join(destDir, header.Name)
-		fmt.Printf("Creating %s\n", target)
+		log.Printf("Creating %s\n", target)
 		if err := ExtractTarFile(target, header, tarReader); err != nil {
 			return err
 		}

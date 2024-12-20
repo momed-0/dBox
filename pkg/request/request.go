@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 	"fmt"
+	"log"
 	"io/ioutil"
 	"encoding/json"
 	"dBox/pkg/model"
@@ -112,7 +113,7 @@ func FetchManifestList(imageName, tag, authToken string) (model.ManifestList, er
 // fetchLayer handles the download and extraction of a single layer
 func FetchLayer(endpoint, imageName, digest, authToken string) error {
 	digestURL := fmt.Sprintf("%s%s", endpoint, digest)
-	fmt.Println("Fetching layer from:", digestURL)
+	log.Println("Fetching layer from:", digestURL)
 	req, err := CreateManifestHTTPRequest("GET", digestURL, authToken)
 	if err != nil {
 		return err
@@ -140,7 +141,7 @@ func FetchEachLayer(layers []model.Config,imageName string,authToken string) err
 			return err
 		}
 	}
-	fmt.Println("All layers extracted successfully to:", path.Join(model.IMAGE_DIR, imageName))
+	log.Println("All layers extracted successfully to:", path.Join(model.IMAGE_DIR, imageName))
 	return nil
 }
 

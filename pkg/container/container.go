@@ -77,7 +77,6 @@ func Child() {
 	if len(os.Args) > 2 {
 		log.Printf("Executing the command: %s", os.Args[3])
 		cmd := exec.Command(os.Args[3], os.Args[4:]...) // os.Args[3] is the command, os.Args[4:] are its arguments
-		fmt.Println(cmd)
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr

@@ -1,7 +1,6 @@
 package image
 
 import (
-	"fmt"
 	"log"
 	"dBox/pkg/filesystem"
 	"dBox/pkg/request"
@@ -12,7 +11,7 @@ import (
 func InitPull(imageName string,tag string) {
 	log.Printf("Checking if the image %s already exits!", imageName)
 	if filesystem.SearchImagesSaved(imageName,tag) == true {
-		fmt.Printf("Image: %s with tag %s already exists\n",imageName,tag)
+		log.Printf("Image: %s with tag %s already exists\n",imageName,tag)
 		return
 	}
 	log.Printf("Authenticating with docker hub..")
@@ -30,7 +29,7 @@ func InitPull(imageName string,tag string) {
 		if manifest.Platform.Architecture == model.ARCH && manifest.Platform.OS == model.OS{
 			err := request.FetchManifest(imageName, manifest.Digest,authData.Token)
 			if err != nil {
-				fmt.Println("Error:", err)
+				log.Fatalf("Error:", err)
 			}	
 		}
 	}
