@@ -27,7 +27,7 @@ func InitPull(imageName string,tag string) {
 	// find the curresponding digest for the specific architecture and os
 	for _, manifest := range manifestList.Manifests {
 		if manifest.Platform.Architecture == model.ARCH && manifest.Platform.OS == model.OS{
-			err := request.FetchManifest(imageName, manifest.Digest,authData.Token)
+			err := request.FetchManifest(imageName,tag, manifest.Digest,authData.Token)
 			if err != nil {
 				log.Fatalf("Error:", err)
 			}	

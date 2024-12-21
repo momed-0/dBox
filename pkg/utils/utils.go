@@ -12,6 +12,9 @@ import (
 	"io/ioutil"
 	"archive/tar"
 	"compress/gzip"
+	"errors"
+	"dBox/pkg/model"
+	"strconv"
 )
 
 func WriteToFile(filename, message string) {
@@ -20,6 +23,101 @@ func WriteToFile(filename, message string) {
 		log.Fatalf("failed to write to file: %v", err)
 	}
 }
+
+func metaDataTemplate(destination,imageName string) error {
+	//create metadata.json
+	_, err := os.Create(destination)
+	if err != nil {
+		return err
+	}
+	template := model.Image{
+		Image_Name: imageName,
+	}
+	file, _ := json.MarshalIndent(template, "", " ")
+
+	_ = os.WriteFile(destination, file, 0644)
+	return nil
+}
+
+
+func WriteMetadata(destination,imageName,tag string) error{
+	metaPath :=  filepath.Join(destination,"metadata.json")
+	//check if the file exists, if not create metadata template
+	if _, err := os.Stat(metaPath); errors.Is(err, os.ErrNotExist) {
+		// metadata.json doesn't exists, first time pulling this image
+		//create the template
+		if err := metaDataTemplate(metaPath,imageName); err != nil {
+			return fmt.Errorf("Error trying to write metadata.json template for first time:  %v", err)
+		}
+	 }
+	// now metadata.json exists , parse the json and append it and save it back
+	data, err := ioutil.ReadFile(metaPath )
+	if err != nil {
+		return fmt.Errorf("Error trying to open metadata.json file:  %v", err)
+	}
+	var image model.Image
+	err = json.Unmarshal(data, &image)
+	if err != nil {
+		return fmt.Errorf("Error unmarshaling metadata.json: %v", err)
+	}
+	//if the imagetag is nil initialize the tag array else append
+	if image.Image_Tag == nil {
+		image.Image_Tag = []string{tag}
+	} else {
+		image.Image_Tag = append(image.Image_Tag, tag)
+	}
+	image.Latest_Tag = findLatestTagNumOrder(image.Latest_Tag,tag)
+	updatedData, err := json.MarshalIndent(image, "", "  ")
+	if err != nil {
+		return fmt.Errorf("Error marshaling metadata.json: %v", err)
+	}
+
+	err = os.WriteFile(metaPath , updatedData, 0644)
+	if err != nil {
+		return fmt.Errorf("Error trying to write metadata file:  %v", err)
+	}
+	return nil
+}
+
+func findLatestTagNumOrder(currLatest,tag string) string {
+	if currLatest == "" {
+		//currLatest is empty
+		return tag
+	} else if tag == "latest" {
+		return tag
+	} else {
+		if tagFloat, err := strconv.ParseFloat(tag, 64); err == nil {
+			if latestFloat, err := strconv.ParseFloat(currLatest, 64); err == nil {
+				if tagFloat > latestFloat {
+					return tag
+				} else {
+					return currLatest
+				}
+			} else {
+				log.Printf("Error Trying to parse the tag %s , Skipping it while considering latest tag!",currLatest)
+			}
+		} else {
+			log.Printf("Error Trying to parse the tag %s , Skipping it while considering latest tag!",tag)
+		}
+	}
+	return currLatest
+}
+func ReadMetaData(destination string) ([]string, error){
+	metaPath := filepath.Join(destination,"metadata.json")
+
+	// now metadata.json exists , parse the json and append it and save it back
+	data, err := ioutil.ReadFile(metaPath )
+	if err != nil {
+		return nil,err
+	}
+	var image model.Image
+	err = json.Unmarshal(data, &image)
+	if err != nil {
+		return nil,err
+	}
+	return image.Image_Tag,nil
+}
+
 
 func ChangeOwnershipImage(imageDir string) error {
 	/*	
@@ -78,7 +176,7 @@ func ExtractTarFile(target string, header *tar.Header, tarReader *tar.Reader) er
 	return nil
 }
 
-func ExtractLayer(destDir string, layerData io.Reader) error {
+func ExtractLayer(destDir string, tag string,layerData io.Reader) error {
 	gz, err := gzip.NewReader(layerData)
 	if err != nil {
 		return fmt.Errorf("failed to create gzip reader: %v", err)
@@ -93,10 +191,6 @@ func ExtractLayer(destDir string, layerData io.Reader) error {
 		}
 		if err != nil {
 			return fmt.Errorf("failed to read tar header: %v", err)
-		}
-		//create the directory 
-		if err := os.MkdirAll(destDir, 0755); err != nil {
-			return fmt.Errorf("failed to create directory:%q : %v",destDir, err)
 		}
 		target := filepath.Join(destDir, header.Name)
 		log.Printf("Creating %s\n", target)

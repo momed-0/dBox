@@ -2,6 +2,7 @@ package request
 
 import (
 	"net/http"
+	"os"
 	"time"
 	"fmt"
 	"log"
@@ -90,12 +91,10 @@ func GetAuthToken(imageName string) (model.AuthResponse, error) {
 // fetchManifestList retrieves the manifest list for a specific image and tag
 func FetchManifestList(imageName, tag, authToken string) (model.ManifestList, error) {
 	manifestURL := fmt.Sprintf("https://registry-1.docker.io/v2/library/%s/manifests/%s", imageName, tag)
-	
 	req, err := CreateManifestHTTPRequest("GET", manifestURL, authToken)
 	if err != nil {
 		return model.ManifestList{}, err
 	}
-
 	resp, err := ExecuteManifestHTTPRequest(req)
 	if err != nil {
 		return model.ManifestList{}, err
@@ -111,7 +110,7 @@ func FetchManifestList(imageName, tag, authToken string) (model.ManifestList, er
 }
 
 // fetchLayer handles the download and extraction of a single layer
-func FetchLayer(endpoint, imageName, digest, authToken string) error {
+func FetchLayer(endpoint, imageName,tag, digest, authToken string) error {
 	digestURL := fmt.Sprintf("%s%s", endpoint, digest)
 	log.Println("Fetching layer from:", digestURL)
 	req, err := CreateManifestHTTPRequest("GET", digestURL, authToken)
@@ -125,19 +124,28 @@ func FetchLayer(endpoint, imageName, digest, authToken string) error {
 	}
 	defer resp.Body.Close()
 
-	destination := path.Join(model.IMAGE_DIR, imageName)
-	if err := utils.ExtractLayer(destination, resp.Body); err != nil {
-		return fmt.Errorf("failed to extract layer: %v", err)
+	destination := path.Join(model.IMAGE_DIR, imageName,tag)
+	//create the directory 
+	if err := os.MkdirAll(destination, 0755); err != nil {
+		return fmt.Errorf("failed to create directory:%q : %v",destination, err)
+	}
+	metadataPath := path.Join(model.IMAGE_DIR ,imageName)
+	if err := utils.WriteMetadata(metadataPath,imageName,tag); err != nil {
+		return err
+	}
+	log.Printf("Extracting image to %s", destination)
+	if err := utils.ExtractLayer(destination,tag,resp.Body); err != nil {
+		return err
 	}
 	return nil
 }
 
-func FetchEachLayer(layers []model.Config,imageName string,authToken string) error {
+func FetchEachLayer(layers []model.Config,imageName string,tag string,authToken string) error {
 
 	endpoint := fmt.Sprintf("https://registry-1.docker.io/v2/library/%s/blobs/", imageName)
 
 	for _, layer := range layers {
-		if err := FetchLayer(endpoint, imageName, layer.Digest, authToken); err != nil {
+		if err := FetchLayer(endpoint, imageName, tag,layer.Digest, authToken); err != nil {
 			return err
 		}
 	}
@@ -147,9 +155,8 @@ func FetchEachLayer(layers []model.Config,imageName string,authToken string) err
 
 
 // fetchManifest retrieves the image manifest from the registry
-func FetchManifest(imageName string,digestsha string,authToken string) error{
+func FetchManifest(imageName string,tag string,digestsha string,authToken string) error{
 	manifestURL := fmt.Sprintf("https://registry-1.docker.io/v2/library/%s/manifests/%s", imageName, digestsha)
-
 	req, err := CreateManifestHTTPRequest("GET", manifestURL, authToken)
 	if err != nil {
 		return err
@@ -166,5 +173,5 @@ func FetchManifest(imageName string,digestsha string,authToken string) error{
 		return err
 	}
 
-	return FetchEachLayer(manifest.Layers, imageName, authToken)
+	return FetchEachLayer(manifest.Layers, imageName,tag, authToken)
 }

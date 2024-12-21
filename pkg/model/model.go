@@ -1,10 +1,12 @@
 package model
 
+import "math"
 
 const (
 	ARCH      = "amd64"
 	OS        = "linux"
 	IMAGE_DIR = "./images/"
+	MAX_FLOAT64 = math.MaxFloat64
 )
 
 type AuthResponse struct {
@@ -39,8 +41,9 @@ type Config struct {
 }
 
 type Image struct {
-	Image_Name string
-	Image_Tag string
+	Image_Name string	`json:"Image_Name"`
+	Image_Tag []string	`json:"Image_Tag"`
+	Latest_Tag string	`json:"Latest_Tag"`
 }
 
 type ImageList struct {

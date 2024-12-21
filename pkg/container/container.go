@@ -11,14 +11,20 @@ import (
 )
 
 
-func ContainerInit() {
-	cmd := exec.Command(os.Args[0], os.Args[1:]...)
-	cGroupInit()
+func ContainerInit(imageData []string) {
+	//remove the image name from the command and execute it again
+	argArray := append(os.Args[:2], os.Args[3:]...)
+	cmd := exec.Command(argArray[0], argArray[1:]...)
 	
+	cGroupInit()
+	imageName := "IMAGE_NAME=" + imageData[0]
+	imageTag := "IMAGE_TAG=" + imageData[1]
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Env = append(os.Environ(), "PROCESS=CHILD")
+	cmd.Env = append(cmd.Env ,imageName)
+	cmd.Env = append(cmd.Env, imageTag)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID | syscall.CLONE_NEWUSER | syscall.CLONE_NEWNS,
 		Credential: &syscall.Credential{Uid: 0, Gid: 0},
@@ -45,7 +51,7 @@ func ContainerInit() {
 	}
 }
 
-func Child() {
+func Child(imageName,tag string) {
 	os.Setenv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin")
 	hostname := fmt.Sprintf("container-%s", time.Now().Format("20060102-150405"))
 
@@ -54,7 +60,7 @@ func Child() {
 		log.Fatalf("Error setting hostname: %v", err)
 	}
 
-	if err := filesystem.SetupOverlayFS(hostname,os.Args[2]); err != nil {
+	if err := filesystem.SetupOverlayFS(hostname,imageName,tag); err != nil {
 		log.Fatalf("Error setting up overlayfs: %v", err)
 	}
 	defer filesystem.TeardownOverlayFS(hostname)
@@ -74,9 +80,9 @@ func Child() {
 		log.Print("failed to mount /proc: %v", err)
 	}
 
-	if len(os.Args) > 2 {
-		log.Printf("Executing the command: %s", os.Args[3])
-		cmd := exec.Command(os.Args[3], os.Args[4:]...) // os.Args[3] is the command, os.Args[4:] are its arguments
+	if len(os.Args) > 1 {
+		log.Printf("Executing the command: %s", os.Args[2])
+		cmd := exec.Command(os.Args[2], os.Args[3:]...) // os.Args[3] is the command, os.Args[4:] are its arguments
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr

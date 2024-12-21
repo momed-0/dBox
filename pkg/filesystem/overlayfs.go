@@ -10,9 +10,9 @@ import (
 
 
 
-func SetupOverlayFS(containerName string,imageName string) error {
+func SetupOverlayFS(containerName string,imageName string,tag string) error {
 
-	lowerDir := fmt.Sprintf("./images/%s",imageName)
+	lowerDir := fmt.Sprintf("./images/%s/%s",imageName,tag)
 	upperDir := fmt.Sprintf("/tmp/%s/upper", containerName) 
 	workDir := fmt.Sprintf("/tmp/%s/work", containerName)   
 	rootDir := fmt.Sprintf("/tmp/%s/root", containerName)   

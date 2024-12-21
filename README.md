@@ -55,14 +55,17 @@ To run a command in a containerized environment:
 
 ```bash
 sudo ./dBox run <image_name> <command> [args...]
+
+sudo ./dBox run <image_name>:<tag (optional)> <command> [args...]
 ```
 - Root permissions are required to start the container.
 - Inside the container, commands are executed as a non-root user.
 
 For example, to run a shell inside the isolated environment:
-
+Assuming that we have already pulled the Ubuntu image with tag 20.04 or the latest image by using the latest tag
 ```bash
 sudo ./dBox run ubuntu /bin/bash
+sudo ./dBox run ubuntu:20.04 /bin/bash
 ```
 Inside the isolated shell, you can run commands like ps, ls, or any other installed commands.
 
@@ -75,6 +78,8 @@ For example, to pull the Arch Linux image:
 
 ```bash
 sudo ./dBox pull archlinux
+sudo ./dBox pull archlinux:latest
+sudo ./dBox pull ubuntu:20.04
 ```
 ### List all the local images
 
@@ -87,7 +92,6 @@ sudo ./dBox images
 
 - tmp files is not automatically cleaned up.Although it will reset on every reboot
 - Add the ability to pull and then run an image in one go.
-- Add support for tags to determine which version of an image to pull and run.
 - Add networking support via the network namespace.
 - Add option to remove the images locally stored
 
