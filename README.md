@@ -88,6 +88,8 @@ sudo ./dBox images
 ---
 
 ## TODO
+- Data Volume Containers
+- Data Volumes
 - Automatically clean up temporary files (currently reset on reboot).
 - Implement a single command to pull and run an image.
 - Add networking support using the network namespace.
